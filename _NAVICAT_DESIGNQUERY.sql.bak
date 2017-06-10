@@ -1,0 +1,36 @@
+--CA001รายชื่อผู้ป่วยมะเร็งทั้งหมด (C00ถึงC97)
+select distinct t_patient.patient_hn as hn,
+        t_visit.visit_vn AS AN,
+				t_visit.visit_begin_visit_time as วันรับบริการ,
+				f_patient_prefix.patient_prefix_description as คำนำ,
+        t_patient.patient_firstname as ชื่อ,
+        t_patient.patient_lastname as สกุล,
+--       (substring(t_patient.patient_birthday,9,2) || '/' || substring(t_patient.patient_birthday,6,2) || '/' || substring(t_patient.patient_birthday,1,4)) AS วันเกิด,
+--    t_visit.visit_begin_visit_time as รับบริการ,
+ --   t_visit.visit_financial_discharge_time as จำหน่าย,
+				t_visit.visit_dx as dx,
+       t_diag_icd10.diag_icd10_number as icd10,
+       t_patient.patient_house as บ้านเลขที่,
+       t_patient.patient_moo as หมู่,
+       f1.address_description as ตำบล,
+       f2.address_description as อำเภอ,
+       f3.address_description as จังหวัด
+from t_patient INNER JOIN t_visit ON t_visit.t_patient_id = t_patient.t_patient_id 
+        LEFT JOIN t_diag_icd10 ON t_diag_icd10.diag_icd10_vn = t_visit.t_visit_id  
+      --and t_diag_icd10.diag_icd10_number between 'C00%' and 'C97%' 
+        LEFT JOIN f_patient_prefix ON t_patient.f_patient_prefix_id = f_patient_prefix.f_patient_prefix_id
+        LEFT JOIN f_address as f1 ON t_patient.patient_tambon = f1.f_address_id
+        LEFT JOIN f_address as f2 ON t_patient.patient_amphur =f2.f_address_id
+        LEFT JOIN f_address as f3 ON t_patient.patient_changwat= f3.f_address_id 
+where  --AND --ผู้ป่วยที่ไม่ถูกยกเลิกการเข้ารับบริการ
+				( t_visit.visit_dx like '%Palliative%'
+					or t_visit.visit_dx like '%palliative%'
+					or t_visit.visit_dx like '%CA %'
+)
+and t_visit.f_visit_status_id <> '4'
+        and t_diag_icd10.f_diag_icd10_type_id = '1'  --primary 
+        AND t_visit.f_visit_type_id = '0'
+				and substring(t_visit.visit_begin_visit_time,1,10) between substring('2556-10-01',1,10) and substring('2557-09-30',1,10)
+        --and substring(t_visit.visit_begin_visit_time ,1,10) between substring(?,1,10) and substring(?,1,10)
+
+order by วันรับบริการ
